@@ -1,0 +1,282 @@
+---
+title: "Chapter 11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Neural Nets
+
+In this chapter, we describe neural networks, a flexible data-driven method that
+can be used for classification or prediction.
+Although considered a “blackbox” in
+terms of interpretability, neural nets have been highly successful in terms of predictive accuracy. 
+
+We discuss the concepts of:
+
+ * nodes
+ * layers
+
+We describe the different parameters that a user
+must specify and explain the effect of each on the process. Finally, we discuss
+the usefulness of neural nets and their limitations.
+
+### Introduction 
+ 
+ Neural networks, also called **artificial neural networks**, are models for classification
+and prediction.
+ They mimic the way that human experts learn. The learning and memory
+properties of neural networks resemble the properties of human learning and
+memory, and they also have a capacity to generalize from particulars.
+The main strength of neural networks is their high predictive performance.
+Their structure supports capturing very complex relationships between predictors and an outcome variable, which is often not possible with other predictive
+models.
+
+### Concept and Structure of a Neural Network
+
+The idea behind neural networks is to combine the predictor information in a
+very flexible way that captures complicated relationships among these variables
+and between them and the outcome variable.
+In
+linear regression modeling we might try different transformations of the predictors, interactions between predictors, and so on, but the specified form of the
+relationship remains linear. In comparison, in neural networks the user is not
+required to specify the correct form. Instead, the network tries to learn about
+such relationships from the data. In fact, linear regression and logistic regression
+can be thought of as special cases of very simple neural networks that have only
+input and output layers and no hidden layers.
+
+Although researchers have studied numerous different neural network architectures, the most successful applications of neural networks in data mining have
+been **multilayer feedforward networks**. These are networks in which there is an input
+layer consisting of nodes (sometimes called **neurons**) that simply accept the predictor values, and successive layers of nodes that receive input from the previous
+layers. The outputs of nodes in each layer are inputs to nodes in the next layer.
+The last layer is called the output layer. Layers between the input and output
+layers are known as hidden layers
+
+A feedforward network is a fully connected
+network with a one-way flow and no cycles. Figure below shows a diagram for
+this architecture, with two hidden layers and one node in the output layer representing the outcome value to be predicted. In a classification problem with m
+classes, there would be **m** output nodes (or **m − 1** output nodes, depending on
+the software).
+
+<center> ![](lab1.PNG) </center>
+
+### Fitting a Network to Data
+
+
+Consider the following very small dataset. Table 11.1 includes information on a
+tasting score for a certain processed cheese. The two predictors are scores for fat
+and salt, indicating the relative presence of fat and salt in the particular cheese
+sample (where 0 is the minimum amount possible in the manufacturing process,
+and 1 the maximum). The outcome variable is the cheese sample’s consumer
+taste preference, where like or dislike indicate whether the consumer likes the
+cheese or not.
+
+Nodes 1 and 2
+belong to the input layer, nodes 3 to 5 belong to the hidden layer, and nodes
+6 and 7 belong to the output layer. The values on the connecting arrows are
+called weights, and the weight on the arrow from node i to node j is denoted
+by wi,j . The additional bias nodes, denoted by θj
+, serve as an intercept for the
+output from node j. These are all explained in further detail below.
+
+```{r}
+
+scores <- read.csv("scores.csv")
+scores
+
+
+```
+
+### Computing Output of Nodes
+
+We discuss the input and output of the nodes separately for each of the three
+types of layers (input, hidden, and output). The main difference is the function
+used to map from the input to the output of the node.
+Input nodes take as input the values of the predictors. Their output is the
+same as the input. If we have p predictors, the input layer will usually include p
+nodes. In our example, there are two predictors, and therefore the input layer
+(shown in Figure 11.2) includes two nodes, each feeding into each node of the
+hidden layer. Consider the first record: The input into the input layer is Fat =
+0.2 and Salt = 0.9, and the output of this layer is also x1 = 0.2 and x2 = 0.9.
+Hidden layer nodes take as input the output values from the input layer.
+The hidden layer in this example consists of three nodes, each receiving input
+from all the input nodes. To compute the output of a hidden layer node, we
+compute a weighted sum of the inputs and apply a certain function to it.
+<left> ![](lab2.PNG) </left>
+
+**NEURAL NETWORK FOR THE EXAMPLE. CIRCLES REPRESENT NODES
+(“NEURONS”), Wi,j ON ARROWS ARE WEIGHTS, AND θj ARE NODE BIAS
+VALUES**
+
+More
+formally, for a set of input values x1, x2, . . . , xp, we compute the output of
+node j by taking the weighted sum1
+θj +
+∑p
+i=1 wijxi
+, where θj
+, w1,j , . . . , wp,j
+are weights that are initially set randomly, then adjusted as the network “learns.”
+Note that θj
+, also called the bias of node j, is a constant that controls the level of
+contribution of node j. In the next step, we take a function g of this sum. The
+function g, also called a transfer function or activation function is some monotone
+function. Examples include the linear function [g(s) = bs], an exponential
+function [g(s) = exp(bs)], and a logistic/sigmoidal function [g(s) = 1/1 +
+e
+−s
+]. 
+
+
+This last function is by far the most popular one in neural networks. Its
+practical value arises from the fact that it has a squashing effect on very small or
+very large values but is almost linear in the range where the value of the function
+is between 0.1 and 0.9
+
+
+If we use a logistic activation function, we can write the output of node j
+in the hidden layer as <right> ![](lab3.PNG) </right>
+
+
+**Initializing the Weights** 
+
+The values of θj and wij are initialized to small,
+usually random, numbers (typically, but not always, in the range 0.00 ± 0.05).
+Such values represent a state of no knowledge by the network, similar to a model
+with no predictors. The initial weights are used in the first round of training.
+Returning to our example, suppose that the initial weights for node 3 are
+θ3 = −0.3, w1,3 = 0.05, and w2,3 = 0.01
+
+<centre> ![](lab4.PNG) </centre>
+
+**COMPUTING NODE OUTPUTS (IN BOLDFACE TYPE) USING THE FIRST RECORD IN
+THE EXAMPLE AND A LOGISTIC FUNCTION** 
+
+Using the logistic function, we can compute the output of node 3 in the hidden layer
+(using the first record) as <left> ![](lab5.PNG) </left>
+
+Finally, the output layer obtains input values from the (last) hidden layer. It
+applies the same function as above to create the output. In other words, it takes a
+weighted sum of its input values and then applies the function g. In our example,
+output nodes 6 and 7 receive input from the three hidden layer nodes. We can
+compute the output of these nodes by
+<left> ![](lab6.PNG) </left>
+
+These two numbers are *almost* the propensities P(Y = dislike | Fat = 0.2,
+Salt = 0.9) and P(Y = like | Fat = 0.2. Salt = 0.9). The last step involves
+normalizing these two values so that they add up to 1. 
+
+<centre> ![](lab7.PNG) </centre>
+
+
+**Relation to Linear and Logistic Regression**
+
+Consider a neural network with a single output node and no hidden layers. For a dataset with p
+predictors, the output node receives x1, x2, . . . , xp, takes a weighted sum of
+these, and applies the g function. The output of the neural network is therefore
+g (θ +
+∑p
+i=1 wixi).
+First, consider a numerical outcome variable Y . If g is the identity function
+[g(s) = s], the output is simply
+
+<centre> ![](lab8.PNG) </centre>
+
+**Preprocessing the Data**
+
+Neural
+networks perform best when the predictors and outcome variable are on a scale
+of [0,1]. For this reason, all variables should be scaled to a [0,1] interval before
+entering them into the network. For a numerical variable X that takes values in
+the range [a, b] where a < b, we normalize the measurements by subtracting a
+and dividing by b − a. The normalized measurement is then
+
+<centre> ![](lab9.PNG) </centre>
+
+
+**Training the Model**
+
+Training the model means estimating the weights θj and wij that lead to the
+best predictive results.
+For each record, the model produces a prediction which
+is then compared with the actual outcome value. Their difference is the error
+for the output node. 
+In particular, the error for the output node is distributed across all the hidden
+nodes that led to it, so that each node is assigned “responsibility” for part of the
+error. Each of these node-specific errors is then used for updating the weights.
+
+**Back Propagation of Error**
+
+The most popular method for using model
+errors to update weights (“learning”) is an algorithm called back propagation. As
+the name implies, errors are computed from the last layer (the output layer) back
+to the hidden layers.
+Let us denote by yˆk the output from output node k. The error associated
+with output node k is computed by
+
+<centre> ![](lab10.PNG) </centre>
+
+
+Let us examine the output from running a neural network on our data.
+Following Figures above, we used a single hidden layer with three nodes.
+R has several packages for neural nets, the most common ones are nnet and
+neuralnet (note that package nnet does not enable multilayer networks and has
+no plotting option). We used neuralnet in this example. The weights and
+model output are shown in tabels shows these weights in a
+format similar to that of our previous diagrams.
+
+```{r}
+
+library(neuralnet)  
+
+nn <- neuralnet( Acceptance ~ Salt + Fat, data = scores, linear.output = F, hidden = 3)
+# display weights
+nn$weights
+# display predictions
+prediction(nn)
+# plot network
+plot(nn, rep="best")
+
+
+```
+
+We use the weights in the way
+we described earlier to compute the hidden layer’s output. For instance, for the
+first record, the output of our previous node 3 is:
+
+<centre> ![](lab11.PNG) </centre>
+
+Similarly, we can compute the output from the two other hidden nodes for
+the same record and get Output4 = 0.21 and Output5 = 0.15. The second
+4×2 table gives the weights connecting the hidden and output layer nodes. To
+compute the probability (= propensity) for the dislike output node for the first
+record, we use the outputs from the hidden layer that we computed above, and
+get
+
+<centre> ![](lab12.PNG) </centre>
+
+Similarly, we can compute the probability for the like output node, obtaining the
+value Output7 = 0.93.
+The probabilities for the other five records are computed in the same manner,
+replacing the input value in the computation of the hidden layer outputs and then
+plugging these outputs into the computation for the output layer. The confusion
+matrix based on these probabilities, using and a cutoff of 0.5, is given in Table
+11.3. We can see that the network correctly classifies all six records.
+
+```{r}
+library(caret)
+library(lattice)
+library(ggplot2)
+predict <- compute(nn, data.frame(scores$Salt, scores$Fat))
+predicted.class=apply(predict$net.result,1,which.max)-1
+
+confusionMatrix(
+  factor(ifelse(predicted.class=="1", "dislike", "like"), levels = 1:2),
+  factor(scores$Acceptance, levels = 1:2)
+)
+
+```
+
+<centre> ![](lab13.PNG) </centre>
